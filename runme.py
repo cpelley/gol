@@ -1,4 +1,4 @@
-import Image
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.lib.stride_tricks as stride
 
@@ -30,40 +30,31 @@ def window_views(grid, xsize=3, ysize=3, xstep=1, ystep=1):
                grid.strides[1] * ystep,
                grid.strides[0],
                grid.strides[1])
-    window = (((grid.shape[0] - 1) / (xsize - 1)),
-              ((grid.shape[1] - 1) / (ysize - 1)),
-              xsize,
-              ysize)
+    window = ((grid.shape[0] - 2) // xstep, (grid.shape[1] - 2) // ystep,
+              xsize, ysize)
     all_windows = stride.as_strided(grid, window, strides)
     return all_windows
 
 
+def plot(grid):
+    plt.figure()
+    plt.pcolor(grid)
+    plt.show()
+
+
 def main():
-    size = (100, 100)
-    grid = np.zeros([size[0] + 2, size[1] + 2], dtype=np.uint16)
-    grid[50:53, 50:53] = 1
+    grid = np.random.randint(0, 2, (102, 102))
+    grid[0, :] = grid[-1, :] = grid[:, 0] = grid[:, -1] = 0
+
     views = window_views(grid)
 
-    mask = np.array([[False, False, False],
-                     [False, True, False],
-                     [False, False, False]])
+    mask = np.array([[True, True, True],
+                     [True, False, True],
+                     [True, True, True]])
 
-    # WindowObject which represents the whole screen
-    stdscr = curses.initscr()
-    # Make cursor invisible
-    curses.curs_set(1)
-    # Echoing of input characters is turned off
-    curses.noecho()
-    stdscr.refresh()
-
-    curses.start_color()
-    bg = curses.COLOR_WHITE
-    fg = curses.COLOR_BLACK
-    curses.init_pair(0, fg, bg)
-    curses.init_pair(1, bg, fg)
-    
-
-    for i in xrange(10):
+    for i in xrange(1000):
+        print i
+        plot(grid)
         for view in views:
             for view_sub in view:
                 neighbours = np.sum(view_sub[mask] > 0)
@@ -76,9 +67,8 @@ def main():
                 # Cell is dead.
                 else:
                     if neighbours is 3:
+                        print 'reproduce'
                         view_sub[1, 1] += 1
-        image = Image.fromarray(grid, 'L')
-        image.show()
 
 
 if __name__ == '__main__':
