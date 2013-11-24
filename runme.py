@@ -44,28 +44,29 @@ def mpl_plot(grid):
     plt.show()
 
 
-def curse_plot(window, grid, fps=None):
+def curse_plot(window, grid, fps=None, verbose=False):
     for ind, line in enumerate(grid):
-#        characters = line > 0
-#        for col, character in enumerate(characters):
-#            if character > 0:
-#                #pass
-#                window.addch(ind, col, 'X', curses.color_pair(2))
-#            else:
-#                #pass
-#                window.delch(ind, col)
-        window.addstr(ind, 0, ''.join(line.astype('|S1')))
-#    window.addstr(grid.shape[0] + 2, 0, 'hello')
+        if not verbose:
+            characters = line > 0
+            for col, character in enumerate(characters):
+                if character > 0:
+                    #pass
+                    window.addch(ind, col, 'X', curses.color_pair(2))
+                else:
+                    window.addch(ind, col, 'X', curses.color_pair(1))
+        else:
+            window.addstr(ind, 0, ''.join(line.astype('|S1')))
     window.refresh()
 
     if fps:
-        time.sleep(1./fps)
+        time.sleep(1. / fps)
 
 
 def main():
     size = (38, 143)
     if np.any([ss % 3 != 2 for ss in size]):
-        raise ValueError('Grid size {} does not conform to size_x % 3 == 2'.format(size))
+        msg = 'Grid size {} does not conform to size_x % 3 == 2'.format(size)
+        raise ValueError(msg)
 
     # Make the cursor visible
     stdscr = curses.initscr()
