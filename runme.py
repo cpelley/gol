@@ -44,18 +44,17 @@ def mpl_plot(grid):
     plt.show()
 
 
-def curse_plot(window, grid, fps=None, verbose=False):
+def curse_plot(window, grid, fps=None):
     for ind, line in enumerate(grid):
-        if not verbose:
-            characters = line > 0
-            for col, character in enumerate(characters):
-                if character > 0:
-                    #pass
-                    window.addch(ind, col, 'X', curses.color_pair(2))
-                else:
-                    window.addch(ind, col, 'X', curses.color_pair(1))
-        else:
-            window.addstr(ind, 0, ''.join(line.astype('|S1')))
+        #characters = line > 0
+        #for col, character in enumerate(characters):
+        #    if character > 0:
+        #        #pass
+        #        window.addch(ind, col, 'X', curses.color_pair(2))
+        #    else:
+        #        window.addch(ind, col, 'X', curses.color_pair(1))
+        pout = ''.join(line.astype('|S1')).replace('0', ' ')
+        window.addstr(ind, 0, pout)
     window.refresh()
 
     if fps:
