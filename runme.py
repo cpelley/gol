@@ -44,40 +44,49 @@ def mpl_plot(grid):
     plt.show()
 
 
-def curse_plot(window, grid, fps=None):
-    for ind, line in enumerate(grid):
-        #characters = line > 0
-        #for col, character in enumerate(characters):
-        #    if character > 0:
-        #        #pass
-        #        window.addch(ind, col, 'X', curses.color_pair(2))
-        #    else:
-        #        window.addch(ind, col, 'X', curses.color_pair(1))
-        pout = ''.join(line.astype('|S1')).replace('0', ' ')
-        window.addstr(ind, 0, pout)
-    window.refresh()
+class CursePlot(object):
+    def __init__(self, grid, window=None, fps=None):
+        self.fps = fps
+        if window:
+            self.window = window
+        else:
+            self.window = curses.initscr()
+        self.grid = grid
 
-    if fps:
-        time.sleep(1. / fps)
+        # Make the cursor visible
+        stdscr = curses.initscr()
+        # No echo of input characters
+        curses.noecho()
+        curses.start_color()
+        curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_BLACK)
+        curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_WHITE)
+
+        # Visibility of cursor
+        curses.curs_set(0)
+
+    def __enter__(self):
+        return self
+
+    def update(self):
+        for ind, line in enumerate(self.grid):
+            pout = ''.join(line.astype('|S1')).replace('0', ' ')
+            self.window.addstr(ind, 0, pout)
+        self.window.refresh()
+    
+        if self.fps:
+            time.sleep(1. / self.fps)
+
+    def __exit__(self):
+        curses.nocbreak()
+        stdscr.keypad(0)
+        curses.echo()
+        curses.endwin()
 
 
-def main():
-    size = (38, 143)
-    if np.any([ss % 3 != 2 for ss in size]):
-        msg = 'Grid size {} does not conform to size_x % 3 == 2'.format(size)
-        raise ValueError(msg)
-
-    # Make the cursor visible
-    stdscr = curses.initscr()
-    # No echo of input characters
-    curses.noecho()
-    curses.start_color()
-    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_WHITE)
-
-    # Visibility of cursor
-    curses.curs_set(0)
-    stdscr.refresh()
+def game_of_life(size=(40, 140), plot_tool=CursePlot):
+    # Adgust dimensions to suitable value
+    size = [dim + (2 - diff) for dim, diff in
+            zip(size, [ss % 3 for ss in size])]    
 
     grid = np.random.randint(0, 2, size)
     grid.astype(np.uint8)
@@ -89,18 +98,13 @@ def main():
                      [True, False, True],
                      [True, True, True]])
 
-    for i in xrange(1000):
-        neighbours = views[..., mask].sum(2)
-        views[..., 1, 1] = (views[..., 1, 1] & ~(neighbours > 3) &
-                            ~(neighbours < 2) | neighbours == 3)
-        curse_plot(stdscr, grid)
-
-    curses.nocbreak()
-    stdscr.keypad(0)
-    curses.echo()
-    curses.endwin()
+    with plot_tool(grid) as plot:
+        for i in xrange(1000):
+            neighbours = views[..., mask].sum(2)
+            views[..., 1, 1] = (views[..., 1, 1] & ~(neighbours > 3) &
+                                ~(neighbours < 2) | neighbours == 3)
+            plot.update()
 
 
 if __name__ == '__main__':
-    np.random.seed(0)
-    main()
+    game_of_life(plot_tool=CursePlot)
