@@ -53,8 +53,6 @@ class CursePlot(object):
             self.window = curses.initscr()
         self.grid = grid
 
-        # Make the cursor visible
-        stdscr = curses.initscr()
         # No echo of input characters
         curses.noecho()
         curses.start_color()
@@ -72,21 +70,21 @@ class CursePlot(object):
             pout = ''.join(line.astype('|S1')).replace('0', ' ')
             self.window.addstr(ind, 0, pout)
         self.window.refresh()
-    
+
         if self.fps:
             time.sleep(1. / self.fps)
 
     def __exit__(self):
         curses.nocbreak()
-        stdscr.keypad(0)
+        self.stdscr.keypad(0)
         curses.echo()
         curses.endwin()
 
 
 def game_of_life(size=(40, 140), plot_tool=CursePlot):
-    # Adgust dimensions to suitable value
+    # Adjust dimensions to suitable value
     size = [dim + (2 - diff) for dim, diff in
-            zip(size, [ss % 3 for ss in size])]    
+            zip(size, [ss % 3 for ss in size])]
 
     grid = np.random.randint(0, 2, size)
     grid.astype(np.uint8)
