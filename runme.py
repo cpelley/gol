@@ -45,18 +45,6 @@ def plot(grid):
 
 
 def main():
-
-    # Make the cursor visible
-    stdscr = curses.initscr()
-    # No echo of input characters
-    curses.noecho()
-    # Visibility of cursor
-    curses.curs_set(1)
-    stdscr.refresh()
-
-
-
-
     size = (37, 72)
     grid = np.random.randint(0, 2, size)
     grid.astype(np.uint8)
@@ -69,11 +57,11 @@ def main():
                      [True, True, True]])
 
     for i in xrange(10000):
-#        print i
-        #plot(grid)
-#        break
-        for ind, view in enumerate(views):
-            for inds, view_sub in enumerate(view):
+        neighbours = views[:, :][mask].sum()
+
+        import ipdb; ipdb.set_trace()
+        for view in views:
+            for view_sub in view:
                 neighbours = np.sum(view_sub[mask] > 0)
                 # Cell is alive.
                 if view_sub[1, 1]:
@@ -85,16 +73,6 @@ def main():
                 else:
                     if neighbours == 3:
                         view_sub[1, 1] += 1
-
-                stdscr.addch(ind + 1, inds + 1, str(neighbours))
-                stdscr.addch(ind + 1, inds + 1 + 73, '1' if view_sub[1, 1] else '0')
-        stdscr.addstr(40, 5, str(i))
-        stdscr.refresh()
-
-    curses.nocbreak()
-    stdscr.keypad(0)
-    curses.echo()
-    curses.endwin()
 
 
 if __name__ == '__main__':
