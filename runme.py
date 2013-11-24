@@ -38,14 +38,47 @@ def window_views(grid, xsize=3, ysize=3, xstep=1, ystep=1):
     return all_windows
 
 
-def plot(grid):
+def mpl_plot(grid):
     plt.figure()
     plt.pcolor(grid)
     plt.show()
 
 
+def curse_plot(window, grid, fps=None):
+    for ind, line in enumerate(grid):
+#        characters = line > 0
+#        for col, character in enumerate(characters):
+#            if character > 0:
+#                #pass
+#                window.addch(ind, col, 'X', curses.color_pair(2))
+#            else:
+#                #pass
+#                window.delch(ind, col)
+        window.addstr(ind, 0, ''.join(line.astype('|S1')))
+#    window.addstr(grid.shape[0] + 2, 0, 'hello')
+    window.refresh()
+
+    if fps:
+        time.sleep(1./fps)
+
+
 def main():
-    size = (7, 7)
+    size = (38, 143)
+    if np.any([ss % 3 != 2 for ss in size]):
+        raise ValueError('Grid size {} does not conform to size_x % 3 == 2'.format(size))
+
+    # Make the cursor visible
+    stdscr = curses.initscr()
+    # No echo of input characters
+    curses.noecho()
+    curses.start_color()
+    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_BLACK)
+    curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_WHITE)
+
+    # Visibility of cursor
+    curses.curs_set(0)
+    stdscr.refresh()
+
     grid = np.random.randint(0, 2, size)
     grid.astype(np.uint8)
     grid[0, :] = grid[-1, :] = grid[:, 0] = grid[:, -1] = 0
@@ -56,12 +89,18 @@ def main():
                      [True, False, True],
                      [True, True, True]])
 
-    for i in xrange(10000):
-        print i
+    for i in xrange(1000):
         neighbours = views[..., mask].sum(2)
         views[..., 1, 1] = (views[..., 1, 1] & ~(neighbours > 3) &
                             ~(neighbours < 2) | neighbours == 3)
+        curse_plot(stdscr, grid)
+
+    curses.nocbreak()
+    stdscr.keypad(0)
+    curses.echo()
+    curses.endwin()
 
 
 if __name__ == '__main__':
+    np.random.seed(0)
     main()
