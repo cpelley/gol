@@ -45,7 +45,7 @@ def plot(grid):
 
 
 def main():
-    size = (37, 72)
+    size = (7, 7)
     grid = np.random.randint(0, 2, size)
     grid.astype(np.uint8)
     grid[0, :] = grid[-1, :] = grid[:, 0] = grid[:, -1] = 0
@@ -57,22 +57,10 @@ def main():
                      [True, True, True]])
 
     for i in xrange(10000):
-        neighbours = views[:, :][mask].sum()
-
-        import ipdb; ipdb.set_trace()
-        for view in views:
-            for view_sub in view:
-                neighbours = np.sum(view_sub[mask] > 0)
-                # Cell is alive.
-                if view_sub[1, 1]:
-                    if neighbours < 2:
-                        view_sub[1, 1] = 0
-                    elif neighbours > 3:
-                        view_sub[1, 1] = 0
-                # Cell is dead.
-                else:
-                    if neighbours == 3:
-                        view_sub[1, 1] += 1
+        print i
+        neighbours = views[..., mask].sum(2)
+        views[..., 1, 1] = (views[..., 1, 1] & ~(neighbours > 3) &
+                            ~(neighbours < 2) | neighbours == 3)
 
 
 if __name__ == '__main__':
