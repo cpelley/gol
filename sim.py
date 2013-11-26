@@ -39,7 +39,8 @@ def window_views(grid, xsize=3, ysize=3, xstep=1, ystep=1):
     return all_windows
 
 
-def game_of_life(size=(40, 140), plot_tool=plot.CursePlot, iterations=1000):
+def game_of_life(size=(40, 140), plot_tool=plot.CursePlot,
+                 iterations=1000):
     """
     Game of life simulation.
 
