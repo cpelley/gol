@@ -1,8 +1,7 @@
-import curses
-import matplotlib.pyplot as plt
 import numpy as np
 import numpy.lib.stride_tricks as stride
-import time
+
+import plot
 
 
 def window_views(grid, xsize=3, ysize=3, xstep=1, ystep=1):
@@ -40,101 +39,7 @@ def window_views(grid, xsize=3, ysize=3, xstep=1, ystep=1):
     return all_windows
 
 
-def mpl_plot(grid):
-    """
-    Simple predefined plotting using matplotlib.
-
-    Args:
-
-    * grid (2darray):
-        Grid to plot.
-
-    Returns:
-
-        None
-
-    """
-    plt.gcf()
-    plt.pcolor(grid)
-    plt.show()
-
-
-class Plot(object):
-    """Abstract class for a GOL simulation plotting backend."""
-    def __enter__(self):
-        raise NotImplementedError()
-
-    def update(self):
-        raise NotImplementedError()
-
-    def __exit__(self):
-        raise NotImplementedError()
-
-
-class CursePlot(Plot):
-    """Curses context manager for fast plotting an ndarray."""
-    def __init__(self, grid, window=None, fps=None):
-        """
-        Curses context manager for fast plotting an ndarray.
-
-        Args:
-
-        * grid (2darray):
-            Grid to plot.
-
-        Kwargs:
-
-        * window (ndarray):
-            ndarray view of the grid (see :func:`window_views`).
-        * fps (int):
-            ~ Numbers of frames per second.
-
-        Returns:
-
-            None
-
-        """
-        self.fps = fps
-        if window:
-            self.window = window
-        else:
-            self.window = curses.initscr()
-        self.grid = grid
-
-        # No echo of input characters
-        curses.noecho()
-        #curses.start_color()
-        #curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_BLACK)
-        #curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_WHITE)
-
-        # Visibility of cursor
-        curses.curs_set(0)
-
-    def __enter__(self):
-        return self
-
-    def update(self):
-        """
-        Update the curses window with the current content of our grid.
-
-        """
-        for ind, line in enumerate(self.grid):
-            pout = ''.join(line.astype('|S1')).replace('0', ' ')
-            self.window.addstr(ind, 0, pout)
-        self.window.refresh()
-
-        if self.fps:
-            time.sleep(1. / self.fps)
-
-    def __exit__(self):
-        # Close curses.
-        curses.nocbreak()
-        self.stdscr.keypad(0)
-        curses.echo()
-        curses.endwin()
-
-
-def game_of_life(size=(40, 140), plot_tool=CursePlot, iterations=1000):
+def game_of_life(size=(40, 140), plot_tool=plot.CursePlot, iterations=1000):
     """
     Game of life simulation.
 
@@ -175,4 +80,4 @@ def game_of_life(size=(40, 140), plot_tool=CursePlot, iterations=1000):
 
 
 if __name__ == '__main__':
-    game_of_life(plot_tool=CursePlot)
+    game_of_life(plot_tool=plot.CursePlot)
