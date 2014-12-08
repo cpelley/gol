@@ -73,30 +73,39 @@ class CursePlot(Plot):
 
         # No echo of input characters
         curses.noecho()
-        #curses.start_color()
-        #curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_BLACK)
-        #curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_WHITE)
+        curses.start_color()
+        curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_BLACK)
+        curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_WHITE)
 
         # Visibility of cursor
         curses.curs_set(0)
 
     def __enter__(self):
+        ymax, xmax = self.window.getmaxyx()
+        if self.grid.shape[0]-2 > ymax or self.grid.shape[1] > xmax:
+            msg = ('Grid size {} exceeds screen character resolution '
+                   '{}'.format((self.grid.shape[0]-2, self.grid.shape[1]-2),
+                               (ymax, xmax)))
+            raise RuntimeError(msg)
         return self
 
     def update(self):
         """
-        Update the curses window with the current content of our grid.
+        Update the curses window with the current content of our grid, ignoring 
+        the grid border.
 
         """
         for ind, line in enumerate(self.grid):
-            pout = ''.join(line.astype('|S1')).replace('0', ' ')
-            self.window.addstr(ind, 0, pout)
-        self.window.refresh()
+            if 0 < ind < self.grid.shape[0]-1:
+                pout = ''.join(line.astype('|S1')).replace('0', ' ')
+                self.window.addstr(ind, 0, pout[1:-1])
+                self.window.refresh()
 
         if self.fps:
             time.sleep(1. / self.fps)
 
     def __exit__(self, type, value, traceback):
+        print 'I did it'
         # Close curses.
         curses.nocbreak()
         self.window.keypad(0)

@@ -19,6 +19,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import copy
+
 import numpy as np
 import numpy.lib.stride_tricks as stride
 
@@ -61,7 +63,7 @@ def window_views(grid, xsize=3, ysize=3, xstep=1, ystep=1):
 
 
 def game_of_life(size=(40, 140), plot_tool=plot.CursePlot,
-                 iterations=1000):
+                 iterations=None, life_record=9, wraparound=True):
     """
     Game of life simulation.
 
@@ -72,20 +74,27 @@ def game_of_life(size=(40, 140), plot_tool=plot.CursePlot,
     * plot_tool (:class:`Plot` subclass):
         Plotting backend for plotting each GOL iteration.
     * iterations (int):
-        Number of iterations for the simulation.
+        Number of iterations for the simulation.  Default of None imposes no
+        limit.
 
     Returns:
 
         None
 
     """
-    # Adjust dimensions to suitable value
+    # Adjust dimensions of grid suitable values
     size = [dim + (2 - diff) for dim, diff in
             zip(size, [ss % 3 for ss in size])]
 
     grid = np.random.randint(0, 2, size)
     grid.astype(np.uint8)
-    grid[0, :] = grid[-1, :] = grid[:, 0] = grid[:, -1] = 0
+    if wraparound:
+        grid[0, :] = grid[-2, :]
+        grid[-1, :] = grid[1, :]
+        grid[:, 0] = grid[:, -2]
+        grid[:, -1] = grid[:, 1]
+    else:
+        grid[0] = grid[-1] = grid[:, 0] = grid[:, -1] = 0
 
     views = window_views(grid)
 
@@ -94,12 +103,31 @@ def game_of_life(size=(40, 140), plot_tool=plot.CursePlot,
                      [True, True, True]])
 
     with plot_tool(grid) as plot:
-        for i in xrange(iterations):
-            neighbours = views[..., mask].sum(2)
-            views[..., 1, 1] = (views[..., 1, 1] & ~(neighbours > 3) &
-                                ~(neighbours < 2) | neighbours == 3)
+        iteration = 0
+        while True:
+            iteration += 1
+            if iterations:
+                iteration += 1
+                if iteration > iterations:
+                    break
+            neighbours = (views[..., mask] > 0).sum(2)
+            logic = ((views[..., 1, 1] > 0) & ~(neighbours > 3) &
+                     ~(neighbours < 2) | neighbours == 3)
+            # Record number of iterations left alive
+            if life_record is not None:
+                views[..., 1, 1] *= logic
+                views[..., 1, 1] += logic
+                grid[grid > life_record] = life_record
+            else:
+                views[..., 1, 1] = logic
+            if wraparound:
+                grid[0, :] = grid[-2, :]
+                grid[-1, :] = grid[1, :]
+                grid[:, 0] = grid[:, -2]
+                grid[:, -1] = grid[:, 1]
             plot.update()
 
 
 if __name__ == '__main__':
-    game_of_life(plot_tool=plot.CursePlot)
+    game_of_life(size=(600, 600), plot_tool=plot.CursePlot, life_record=9,
+                 wraparound=True)
